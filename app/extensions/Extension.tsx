@@ -1,9 +1,11 @@
-import React from "react";
 import { Button } from "~/components/ui/button";
-import { Card } from "~/components/ui/card";
+import { CardTitle, CardDescription, Card } from "~/components/ui/card";
 import { Switch } from "~/components/ui/switch";
+import { appStore } from "~/store/appStore";
+import { AnimatePresence, motion } from "motion/react";
 
 export default function Extension() {
+  const { isChecked, setIsChecked, all, active, inactive } = appStore();
   const extensions = [
     {
       name: "DevLens",
@@ -73,31 +75,58 @@ export default function Extension() {
     },
   ];
 
+  const handleSwitchChange = (isChecked: string, checked: boolean) => {
+    setIsChecked(isChecked, checked);
+  };
+
+  const filteredExtensions = extensions.filter((extension) => {
+    if (all) return true;
+    if (active && isChecked[extension.name]) return true;
+    if (inactive && !isChecked[extension.name]) return true;
+    return false;
+  });
+
   return (
     <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl  ">
-      {extensions.map((extension) => (
-        <Card
-          key={extension.name}
-          className=" p-6 rounded-3xl  bg-gray-700 flex flex-col justify-between "
-        >
-          <div className="flex  gap-4">
-            <img src={extension.icon} alt={extension.name} />
-            <div>
-              <h2 className="text-xl font-bold">{extension.name}</h2>
-              <p className="text-gray-500">{extension.description}</p>
-            </div>
-          </div>
-          <div className="flex items-center justify-between mt-12">
-            <Button
-              className=" font-semibold cursor-pointer border-1 rounded-4xl hover:bg-red-600 hover:border-0 hover:text-[color:#070e2c]"
-              variant={"ghost"}
-            >
-              Remove
-            </Button>
-            <Switch />
-          </div>
-        </Card>
-      ))}
+      <AnimatePresence>
+        {filteredExtensions.map((extension) => (
+          <motion.div
+            key={extension.name}
+            exit={{ opacity: 0, transform: "translateY(-20px)" }}
+            transition={{ duration: 0.3 }}
+          >
+            <Card className=" p-6 rounded-3xl  bg-gray-700 flex flex-col justify-between border-0 shadow-md hover:shadow-lg  text-white">
+              <div className="flex  gap-4">
+                <img src={extension.icon} alt={extension.name} />
+                <div>
+                  <CardTitle className="text-xl font-bold">
+                    {extension.name}
+                  </CardTitle>
+                  <CardDescription className="text-gray-300 text-sm mt-2">
+                    {extension.description}
+                  </CardDescription>
+                </div>
+              </div>
+              <div className="flex items-center justify-between mt-12">
+                <Button
+                  className="  font-semibold cursor-pointer border-1 rounded-4xl hover:bg-red-600 hover:border-0 hover:text-[color:#070e2c]  transition-colors  duration-200 ease-in-out"
+                  variant={"ghost"}
+                  onClick={() => handleSwitchChange(extension.name, false)}
+                >
+                  Remove
+                </Button>
+                <Switch
+                  checked={isChecked[extension.name] || false}
+                  onCheckedChange={(checked) =>
+                    handleSwitchChange(extension.name, checked)
+                  }
+                  className="data-[state=checked]:bg-red-500 data-[state=checked]:hover:bg-red-600 cursor-pointer"
+                />
+              </div>
+            </Card>
+          </motion.div>
+        ))}
+      </AnimatePresence>
     </div>
   );
 }
